@@ -3,7 +3,7 @@
     <div class="page-header">
       <div class="page-title">🚒 火情处置</div>
       <div class="flex gap-12">
-        <button class="btn btn-default" @click="locateSmoke">📍 定位烟点</button>
+        <button class="btn btn-default" @click="openSmokeModal">📍 定位烟点</button>
         <button class="btn btn-warning" @click="showReportModal = true">🔥 火点上报</button>
       </div>
     </div>
@@ -34,15 +34,15 @@
         </div>
         <div class="map-container" style="height: 400px;">
           <div style="position: relative; width: 100%; height: 100%; background: linear-gradient(135deg, #fff7e6 0%, #ffe7ba 100%);">
-            <div v-for="fire in store.firePoints" :key="fire.id"
-                 :style="{ position: 'absolute', left: (20 + Math.random() * 60) + '%', top: (20 + Math.random() * 60) + '%' }">
+            <div v-for="(fire, idx) in store.firePoints" :key="fire.id"
+                 :style="{ position: 'absolute', left: (15 + (idx % 3) * 25) + '%', top: (20 + Math.floor(idx / 3) * 25) + '%' }">
               <div :class="['status-badge', fire.status === 'extinguished' ? 'normal' : fire.status === 'controlled' ? 'warning' : 'danger']"
-                   style="background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.15); animation: fire.status !== 'extinguished' ? 'pulse 2s infinite' : 'none';">
+                   style="background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
                 🔥 {{ fire.location }}
               </div>
             </div>
-            <div v-for="smoke in store.smokePoints.filter(s => s.status !== 'false_alarm')" :key="smoke.id"
-                 :style="{ position: 'absolute', left: (30 + Math.random() * 50) + '%', top: (30 + Math.random() * 50) + '%' }">
+            <div v-for="(smoke, idx) in store.smokePoints.filter(s => s.status !== 'false_alarm')" :key="smoke.id"
+                 :style="{ position: 'absolute', left: (25 + (idx % 2) * 35) + '%', top: (40 + Math.floor(idx / 2) * 20) + '%' }">
               <div class="status-badge warning" style="background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
                 💨 烟点{{ smoke.id.slice(-2) }}
               </div>
@@ -118,15 +118,16 @@
           <div>{{ selectedFire.description }}</div>
         </div>
         <div class="form-item">
-          <div style="color: #999; margin-bottom: 4px;">现场照片</div>
-          <div class="flex gap-8">
-            <div style="width: 80px; height: 80px; background: #f0f0f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #999;">
-              📷 照片1
+          <div style="color: #999; margin-bottom: 8px;">现场照片</div>
+          <div class="flex gap-8 flex-wrap">
+            <div v-for="(photo, idx) in selectedFirePhotos" :key="idx" style="position: relative;">
+              <img :src="photo" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid #e8e8e8;" />
+              <button class="btn btn-danger btn-sm" style="position: absolute; top: -8px; right: -8px; padding: 0 6px;" @click="removePhoto(idx)">×</button>
             </div>
-            <div style="width: 80px; height: 80px; background: #f0f0f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #999;">
-              📷 照片2
-            </div>
-            <button class="btn btn-default btn-sm" style="height: 80px; width: 80px;">+ 上传</button>
+            <button class="btn btn-default" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; flex-direction: column;" @click="uploadPhoto">
+              <span style="font-size: 24px;">+</span>
+              <span style="font-size: 12px;">上传</span>
+            </button>
           </div>
         </div>
       </div>
@@ -152,6 +153,7 @@
     <div class="card">
       <div class="card-header">
         <div class="card-title">👥 群众转移点设置</div>
+        <button class="btn btn-primary btn-sm" @click="openEvacuationModal()">+ 新增转移点</button>
       </div>
       <table>
         <thead>
@@ -161,18 +163,23 @@
             <th>容量</th>
             <th>联系人</th>
             <th>联系电话</th>
+            <th>经纬度</th>
             <th>操作</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="point in store.evacuationPoints" :key="point.id">
-            <td>{{ point.name }}</td>
+            <td><strong>{{ point.name }}</strong></td>
             <td>{{ point.address }}</td>
             <td>{{ point.capacity }} 人</td>
             <td>{{ point.contact }}</td>
             <td>{{ point.phone }}</td>
+            <td>{{ point.lng }}, {{ point.lat }}</td>
             <td>
-              <button class="btn btn-primary btn-sm">查看</button>
+              <div class="flex gap-8">
+                <button class="btn btn-primary btn-sm" @click="openEvacuationModal(point)">编辑</button>
+                <button class="btn btn-danger btn-sm" @click="deleteEvacuation(point.id)">删除</button>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -242,6 +249,54 @@
       </div>
     </div>
 
+    <div v-if="showSmokeModal" class="modal-overlay" @click.self="showSmokeModal = false">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">📍 {{ editingSmoke ? '编辑' : '定位' }}烟点</div>
+          <button class="modal-close" @click="showSmokeModal = false">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-item">
+            <label class="form-label">来源</label>
+            <select class="form-select" v-model="newSmoke.source">
+              <option value="卫星监测">卫星监测</option>
+              <option value="视频监控">视频监控</option>
+              <option value="瞭望塔">瞭望塔</option>
+              <option value="群众举报">群众举报</option>
+              <option value="巡护发现">巡护发现</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-item">
+              <label class="form-label">经度</label>
+              <input class="form-input" type="number" step="0.0001" v-model.number="newSmoke.lng" placeholder="如：116.4074" />
+            </div>
+            <div class="form-item">
+              <label class="form-label">纬度</label>
+              <input class="form-input" type="number" step="0.0001" v-model.number="newSmoke.lat" placeholder="如：39.9042" />
+            </div>
+          </div>
+          <div class="form-item">
+            <label class="form-label">置信度 (0-1)</label>
+            <input class="form-input" type="number" step="0.01" min="0" max="1" v-model.number="newSmoke.confidence" placeholder="如：0.85" />
+          </div>
+          <div class="form-item">
+            <label class="form-label">状态</label>
+            <select class="form-select" v-model="newSmoke.status">
+              <option value="suspected">疑似</option>
+              <option value="confirmed">已确认</option>
+              <option value="false_alarm">误报</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-default" @click="showSmokeModal = false">取消</button>
+          <button class="btn btn-primary" @click="saveSmokePoint">保存</button>
+        </div>
+      </div>
+    </div>
+
     <div v-if="showTimelineModal" class="modal-overlay" @click.self="showTimelineModal = false">
       <div class="modal">
         <div class="modal-header">
@@ -275,18 +330,72 @@
         </div>
       </div>
     </div>
+
+    <div v-if="showEvacuationModal" class="modal-overlay" @click.self="showEvacuationModal = false">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">👥 {{ editingEvacuation ? '编辑' : '新增' }}转移点</div>
+          <button class="modal-close" @click="showEvacuationModal = false">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-item">
+            <label class="form-label">转移点名称</label>
+            <input class="form-input" v-model="newEvacuation.name" placeholder="请输入转移点名称" />
+          </div>
+          <div class="form-item">
+            <label class="form-label">地址</label>
+            <input class="form-input" v-model="newEvacuation.address" placeholder="请输入详细地址" />
+          </div>
+          <div class="form-row">
+            <div class="form-item">
+              <label class="form-label">经度</label>
+              <input class="form-input" type="number" step="0.0001" v-model.number="newEvacuation.lng" placeholder="如：116.4074" />
+            </div>
+            <div class="form-item">
+              <label class="form-label">纬度</label>
+              <input class="form-input" type="number" step="0.0001" v-model.number="newEvacuation.lat" placeholder="如：39.9042" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-item">
+              <label class="form-label">容纳人数</label>
+              <input class="form-input" type="number" v-model.number="newEvacuation.capacity" />
+            </div>
+            <div class="form-item">
+              <label class="form-label">联系人</label>
+              <input class="form-input" v-model="newEvacuation.contact" placeholder="请输入联系人姓名" />
+            </div>
+          </div>
+          <div class="form-item">
+            <label class="form-label">联系电话</label>
+            <input class="form-input" v-model="newEvacuation.phone" placeholder="请输入联系电话" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-default" @click="showEvacuationModal = false">取消</button>
+          <button class="btn btn-primary" @click="saveEvacuation">保存</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useMainStore } from '@/store'
-import type { FirePoint, TimelineEvent } from '@/types'
+import type { FirePoint, SmokePoint, TimelineEvent, EvacuationPoint } from '@/types'
+import { triggerImageInput } from '@/utils'
 
 const store = useMainStore()
 const selectedFire = ref<FirePoint | null>(null)
 const showReportModal = ref(false)
+const showSmokeModal = ref(false)
 const showTimelineModal = ref(false)
+const showEvacuationModal = ref(false)
+
+const editingSmoke = ref<SmokePoint | null>(null)
+const editingEvacuation = ref<EvacuationPoint | null>(null)
+const selectedFirePhotos = ref<string[]>([])
 
 const newFire = ref({
   location: '',
@@ -298,10 +407,28 @@ const newFire = ref({
   spreadDirection: ''
 })
 
+const newSmoke = ref({
+  source: '卫星监测',
+  lng: 116.4,
+  lat: 39.9,
+  confidence: 0.8,
+  status: 'suspected' as const
+})
+
 const newTimelineEvent = ref({
   type: 'other' as TimelineEvent['type'],
   description: '',
   operator: ''
+})
+
+const newEvacuation = ref({
+  name: '',
+  address: '',
+  lng: 116.4,
+  lat: 39.9,
+  capacity: 200,
+  contact: '',
+  phone: ''
 })
 
 function getFireStatusText(status: string) {
@@ -345,10 +472,58 @@ function getEventTypeText(type: string) {
 
 function selectFire(fire: FirePoint) {
   selectedFire.value = fire
+  selectedFirePhotos.value = (fire as any).photos || []
 }
 
-function locateSmoke() {
-  alert('正在通过卫星和监控系统扫描疑似烟点...')
+function openSmokeModal(smoke?: SmokePoint) {
+  editingSmoke.value = smoke || null
+  if (smoke) {
+    newSmoke.value = { ...smoke }
+  } else {
+    newSmoke.value = {
+      source: '卫星监测',
+      lng: 116.4,
+      lat: 39.9,
+      confidence: 0.8,
+      status: 'suspected'
+    }
+  }
+  showSmokeModal.value = true
+}
+
+function openEvacuationModal(point?: EvacuationPoint) {
+  editingEvacuation.value = point || null
+  if (point) {
+    newEvacuation.value = { ...point }
+  } else {
+    newEvacuation.value = {
+      name: '',
+      address: '',
+      lng: 116.4,
+      lat: 39.9,
+      capacity: 200,
+      contact: '',
+      phone: ''
+    }
+  }
+  showEvacuationModal.value = true
+}
+
+function saveSmokePoint() {
+  if (editingSmoke.value) {
+    store.updateSmokePoint(editingSmoke.value.id, newSmoke.value)
+    alert('烟点更新成功！')
+  } else {
+    const smoke: Omit<SmokePoint, 'id'> = {
+      detectTime: new Date().toLocaleString('zh-CN'),
+      ...newSmoke.value
+    }
+    store.addSmokePoint(smoke)
+    alert('烟点定位成功！')
+  }
+  store.saveToLocalStorage()
+  showSmokeModal.value = false
+  editingSmoke.value = null
 }
 
 function reportFire() {
@@ -429,5 +604,61 @@ function addTimelineEvent() {
   
   showTimelineModal.value = false
   newTimelineEvent.value = { type: 'other', description: '', operator: '' }
+}
+
+async function uploadPhoto() {
+  if (!selectedFire.value) return
+  
+  try {
+    const photoData = await triggerImageInput()
+    selectedFirePhotos.value.push(photoData)
+    
+    store.updateFirePoint(selectedFire.value.id, {
+      photos: selectedFirePhotos.value
+    } as any)
+    
+    store.saveToLocalStorage()
+  } catch (error) {
+    console.error('上传照片失败', error)
+  }
+}
+
+function removePhoto(index: number) {
+  if (!selectedFire.value) return
+  
+  selectedFirePhotos.value.splice(index, 1)
+  
+  store.updateFirePoint(selectedFire.value.id, {
+    photos: selectedFirePhotos.value
+  } as any)
+  
+  store.saveToLocalStorage()
+}
+
+function saveEvacuation() {
+  if (!newEvacuation.value.name) {
+    alert('请填写转移点名称')
+    return
+  }
+  
+  if (editingEvacuation.value) {
+    store.updateEvacuationPoint(editingEvacuation.value.id, newEvacuation.value)
+    alert('转移点更新成功！')
+  } else {
+    store.addEvacuationPoint(newEvacuation.value)
+    alert('转移点新增成功！')
+  }
+  
+  store.saveToLocalStorage()
+  showEvacuationModal.value = false
+  editingEvacuation.value = null
+}
+
+function deleteEvacuation(id: string) {
+  if (confirm('确定要删除该转移点吗？')) {
+    store.deleteEvacuationPoint(id)
+    store.saveToLocalStorage()
+    alert('删除成功！')
+  }
 }
 </script>

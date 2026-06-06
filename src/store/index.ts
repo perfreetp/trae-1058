@@ -90,6 +90,111 @@ export const useMainStore = defineStore('main', () => {
     }
   }
 
+  function addWeatherData(data: WeatherData[]) {
+    weatherData.value = [...weatherData.value, ...data]
+  }
+
+  function addWatchTower(tower: Omit<WatchTower, 'id'>) {
+    const newTower: WatchTower = {
+      ...tower,
+      id: Date.now().toString()
+    }
+    watchTowers.value.push(newTower)
+    return newTower
+  }
+
+  function updateWatchTower(id: string, tower: Partial<WatchTower>) {
+    const idx = watchTowers.value.findIndex(t => t.id === id)
+    if (idx > -1) {
+      watchTowers.value[idx] = { ...watchTowers.value[idx], ...tower }
+    }
+  }
+
+  function addWaterSource(source: Omit<WaterSource, 'id'>) {
+    const newSource: WaterSource = {
+      ...source,
+      id: Date.now().toString()
+    }
+    waterSources.value.push(newSource)
+    return newSource
+  }
+
+  function updateWaterSource(id: string, source: Partial<WaterSource>) {
+    const idx = waterSources.value.findIndex(s => s.id === id)
+    if (idx > -1) {
+      waterSources.value[idx] = { ...waterSources.value[idx], ...source }
+    }
+  }
+
+  function addSmokePoint(point: Omit<SmokePoint, 'id'>) {
+    const newPoint: SmokePoint = {
+      ...point,
+      id: Date.now().toString()
+    }
+    smokePoints.value.push(newPoint)
+    return newPoint
+  }
+
+  function updateSmokePoint(id: string, point: Partial<SmokePoint>) {
+    const idx = smokePoints.value.findIndex(s => s.id === id)
+    if (idx > -1) {
+      smokePoints.value[idx] = { ...smokePoints.value[idx], ...point }
+    }
+  }
+
+  function addEquipment(equipment: Omit<Equipment, 'id'>) {
+    const newEquip: Equipment = {
+      ...equipment,
+      id: Date.now().toString()
+    }
+    equipments.value.push(newEquip)
+    return newEquip
+  }
+
+  function updateEquipment(id: string, equipment: Partial<Equipment>) {
+    const idx = equipments.value.findIndex(e => e.id === id)
+    if (idx > -1) {
+      equipments.value[idx] = { ...equipments.value[idx], ...equipment }
+    }
+  }
+
+  function deleteEquipment(id: string) {
+    const idx = equipments.value.findIndex(e => e.id === id)
+    if (idx > -1) {
+      equipments.value.splice(idx, 1)
+    }
+  }
+
+  function addEvacuationPoint(point: Omit<EvacuationPoint, 'id'>) {
+    const newPoint: EvacuationPoint = {
+      ...point,
+      id: Date.now().toString()
+    }
+    evacuationPoints.value.push(newPoint)
+    return newPoint
+  }
+
+  function updateEvacuationPoint(id: string, point: Partial<EvacuationPoint>) {
+    const idx = evacuationPoints.value.findIndex(e => e.id === id)
+    if (idx > -1) {
+      evacuationPoints.value[idx] = { ...evacuationPoints.value[idx], ...point }
+    }
+  }
+
+  function deleteEvacuationPoint(id: string) {
+    const idx = evacuationPoints.value.findIndex(e => e.id === id)
+    if (idx > -1) {
+      evacuationPoints.value.splice(idx, 1)
+    }
+  }
+
+  function updateFirePoint(id: string, point: Partial<FirePoint>) {
+    const idx = firePoints.value.findIndex(p => p.id === id)
+    if (idx > -1) {
+      firePoints.value[idx] = { ...firePoints.value[idx], ...point }
+    }
+  }
+
   function saveToLocalStorage() {
     const data = {
       weatherData: weatherData.value,
@@ -161,6 +266,20 @@ export const useMainStore = defineStore('main', () => {
     addTimelineEvent,
     addPatrolRecord,
     updateFirePointStatus,
+    addWeatherData,
+    addWatchTower,
+    updateWatchTower,
+    addWaterSource,
+    updateWaterSource,
+    addSmokePoint,
+    updateSmokePoint,
+    addEquipment,
+    updateEquipment,
+    deleteEquipment,
+    addEvacuationPoint,
+    updateEvacuationPoint,
+    deleteEvacuationPoint,
+    updateFirePoint,
     saveToLocalStorage,
     loadFromLocalStorage
   }

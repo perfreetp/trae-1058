@@ -120,10 +120,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import * as echarts from 'echarts'
 import { useMainStore } from '@/store'
 import type { GridCell } from '@/types'
+import { triggerFileInput, importWeatherData as importWeatherFromFile, calculateFireRiskLevel } from '@/utils'
 
 const store = useMainStore()
 const selectedCell = ref<GridCell | null>(null)
@@ -137,6 +138,13 @@ const riskStats = computed(() => {
   return stats
 })
 
+const latestWeather = computed(() => {
+  if (store.weatherData.length > 0) {
+    return store.weatherData[store.weatherData.length - 1]
+  }
+  return null
+})
+
 function getRiskText(level: number) {
   const texts = ['', '一级', '二级', '三级', '四级', '五级']
   return texts[level] || ''
@@ -147,17 +155,66 @@ function getRiskBadgeClass(level: number) {
   return classes[level] || 'info'
 }
 
-function importWeather() {
-  alert('请选择气象数据文件（支持 Excel/CSV 格式）\n\n提示：实际项目中会调用文件选择对话框')
+async function importWeather() {
+  try {
+    const file = await triggerFileInput('.xlsx,.xls,.csv')
+    const data = await importWeatherFromFile(file)
+    
+    if (data.length === 0) {
+      alert('文件中没有有效数据')
+      return
+    }
+    
+    data.forEach(item => {
+      if (!item.fireRiskLevel) {
+        item.fireRiskLevel = calculateFireRiskLevel(
+          item.temperature,
+          item.humidity,
+          item.windSpeed,
+          item.rainfall
+        )
+      }
+    })
+    
+    store.addWeatherData(data)
+    store.saveToLocalStorage()
+    
+    alert(`成功导入 ${data.length} 条气象数据！`)
+  } catch (error: any) {
+    alert('导入失败：' + error.message)
+  }
 }
 
 function generateRiskLevel() {
+  if (!latestWeather.value) {
+    alert('请先导入气象数据')
+    return
+  }
+  
   if (confirm('确定要根据最新气象数据重新计算所有网格的火险等级吗？')) {
+    const temp = latestWeather.value.temperature
+    const humidity = latestWeather.value.humidity
+    const windSpeed = latestWeather.value.windSpeed
+    const rainfall = latestWeather.value.rainfall
+    
+    const baseLevel = calculateFireRiskLevel(temp, humidity, windSpeed, rainfall)
+    
     store.gridCells.forEach(cell => {
-      cell.fireRiskLevel = Math.ceil(Math.random() * 5) as 1 | 2 | 3 | 4 | 5
+      let level = baseLevel
+      if (cell.vegetation === '针叶林') level = Math.min(5, level + 1)
+      if (cell.area > 800) level = Math.min(5, level + 1)
+      cell.fireRiskLevel = level as 1 | 2 | 3 | 4 | 5
     })
+    
     store.saveToLocalStorage()
-    alert('火险等级已更新！')
+    refreshChart()
+    alert('火险等级已基于最新气象数据更新！')
+  }
+}
+
+function refreshChart() {
+  if (riskChartRef.value) {
+    initRiskChart()
   }
 }
 

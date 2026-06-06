@@ -163,6 +163,7 @@
 import { ref, computed } from 'vue'
 import { useMainStore } from '@/store'
 import type { PatrolRecord } from '@/types'
+import { triggerFileInput, importPatrolRecords as importPatrolFromFile } from '@/utils'
 
 const store = useMainStore()
 const selectedPatrol = ref<PatrolRecord | null>(null)
@@ -197,8 +198,28 @@ function getStatusBadge(status: string) {
   return map[status] || 'badge-info'
 }
 
-function importPatrol() {
-  alert('请选择巡护记录文件（支持 Excel/CSV 格式）')
+async function importPatrol() {
+  try {
+    const file = await triggerFileInput('.xlsx,.xls,.csv')
+    const data = await importPatrolFromFile(file)
+    
+    if (data.length === 0) {
+      alert('文件中没有有效数据')
+      return
+    }
+    
+    data.forEach(item => {
+      if (!item.status || !['patrolling', 'completed', 'pending'].includes(item.status)) {
+        item.status = 'pending'
+      }
+      store.addPatrolRecord(item)
+    })
+    
+    store.saveToLocalStorage()
+    alert(`成功导入 ${data.length} 条巡护记录！`)
+  } catch (error: any) {
+    alert('导入失败：' + error.message)
+  }
 }
 
 function dispatchPatrol() {

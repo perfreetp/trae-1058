@@ -90,7 +90,7 @@
               <td>
                 <div class="flex gap-8">
                   <button class="btn btn-primary btn-sm" @click="selectedReport = report">查看</button>
-                  <button class="btn btn-default btn-sm">导出</button>
+                  <button class="btn btn-default btn-sm" @click="exportReview(report)">导出</button>
                 </div>
               </td>
             </tr>
@@ -226,6 +226,7 @@
 import { ref, computed } from 'vue'
 import { useMainStore } from '@/store'
 import type { DrillRecord, ReviewReport, CallRecord } from '@/types'
+import { exportToExcel, exportToHTML } from '@/utils'
 
 const store = useMainStore()
 const activeTab = ref('drills')
@@ -334,5 +335,34 @@ function saveCall() {
   newCall.value = { caller: '', callerPhone: '', content: '', handler: '' }
   
   alert('通话纪要已保存！')
+}
+
+function exportReview(report: ReviewReport) {
+  const content = `
+    <h1>${report.title}</h1>
+    <h2 style="text-align: center; color: #666;">关联演练：${getDrillName(report.drillId)}</h2>
+    
+    <div class="section">
+      <h2>一、演练总结</h2>
+      <p style="line-height: 1.8;">${report.content.replace(/\n/g, '<br>')}</p>
+    </div>
+    
+    <div class="section">
+      <h2>二、存在问题</h2>
+      <p style="line-height: 1.8; color: #f5222d;">${report.problems.replace(/\n/g, '<br>')}</p>
+    </div>
+    
+    <div class="section">
+      <h2>三、改进建议</h2>
+      <p style="line-height: 1.8; color: #52c41a;">${report.suggestions.replace(/\n/g, '<br>')}</p>
+    </div>
+    
+    <div style="text-align: right; margin-top: 40px;">
+      <p>生成时间：${report.createTime}</p>
+    </div>
+  `
+  
+  exportToHTML(report.title, content, `${report.title}.html`)
+  alert('复盘报告已导出为 HTML 文件，可用浏览器打开或打印为PDF！')
 }
 </script>

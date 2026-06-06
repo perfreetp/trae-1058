@@ -144,6 +144,7 @@ import { ref, onMounted, nextTick } from 'vue'
 import * as echarts from 'echarts'
 import { useMainStore } from '@/store'
 import type { DailyReport } from '@/types'
+import { exportToExcel, exportToHTML } from '@/utils'
 
 const store = useMainStore()
 const fireChartRef = ref<HTMLElement>()
@@ -338,12 +339,59 @@ function viewReport(report: DailyReport) {
 }
 
 function exportDaily() {
-  alert('正在导出值班日报...\n\n提示：实际项目中会导出为 Excel/PDF 文件')
+  const data = store.dailyReports.map(r => ({
+    '日期': r.date,
+    '天气情况': r.weather,
+    '巡护次数': r.patrolCount,
+    '火险等级': r.fireRisk,
+    '重要事件': r.events,
+    '值班领导': r.dutyOfficer,
+    '生成时间': r.createTime
+  }))
+  
+  exportToExcel(data, '值班日报汇总.xlsx', '值班日报')
+  alert('值班日报汇总已导出为 Excel 文件！')
 }
 
 function exportOneReport(report: DailyReport | null) {
   if (!report) return
-  alert(`正在导出 ${report.date} 的值班日报...\n\n提示：实际项目中会导出为 PDF 文件`)
+  
+  const content = `
+    <h1>XX县森林防火值班日报</h1>
+    <h2 style="text-align: center; color: #666;">${report.date}</h2>
+    
+    <div class="section">
+      <h2>一、天气情况</h2>
+      <p>${report.weather}</p>
+    </div>
+    
+    <div class="section">
+      <h2>二、火险等级</h2>
+      <p>${report.fireRisk}</p>
+    </div>
+    
+    <div class="section">
+      <h2>三、巡护情况</h2>
+      <p>今日共组织巡护 <strong>${report.patrolCount}</strong> 次，巡护人员全部在岗在位，巡护路线覆盖全部重点区域。</p>
+    </div>
+    
+    <div class="section">
+      <h2>四、重要事件</h2>
+      <p>${report.events}</p>
+    </div>
+    
+    <div class="section">
+      <h2>五、值班领导</h2>
+      <p>${report.dutyOfficer}</p>
+    </div>
+    
+    <div style="text-align: right; margin-top: 40px;">
+      <p>生成时间：${report.createTime}</p>
+    </div>
+  `
+  
+  exportToHTML('值班日报 - ' + report.date, content, `值班日报_${report.date}.html`)
+  alert('值班日报已导出为 HTML 文件，可用浏览器打开或打印为PDF！')
 }
 
 onMounted(() => {
