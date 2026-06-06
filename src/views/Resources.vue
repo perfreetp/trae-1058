@@ -3,28 +3,45 @@
     <div class="page-header">
       <div class="page-title">📦 物资队伍</div>
       <div class="flex gap-12">
-        <button class="btn btn-default" @click="openWatchTowerModal()">🗼 标注瞭望塔</button>
-        <button class="btn btn-default" @click="openWaterSourceModal()">💧 标注水源</button>
+        <button class="btn btn-default" @click="openWatchTowerModal">🗼 标注瞭望塔</button>
+        <button class="btn btn-default" @click="openWaterSourceModal">💧 标注水源</button>
         <button class="btn btn-primary" @click="showTeamModal = true">👥 登记队伍</button>
       </div>
     </div>
 
     <div class="tabs">
-      <div class="tab-item" :class="{ active: activeTab === 'teams' }" @click="activeTab = 'teams'">👥 扑火队伍</div>
-      <div class="tab-item" :class="{ active: activeTab === 'equipments' }" @click="activeTab = 'equipments'">⚙️ 装备物资</div>
-      <div class="tab-item" :class="{ active: activeTab === 'watchtowers' }" @click="activeTab = 'watchtowers'">🗼 瞭望塔</div>
-      <div class="tab-item" :class="{ active: activeTab === 'watersources' }" @click="activeTab = 'watersources'">💧 水源地</div>
+      <div 
+        class="tab-item" 
+        :class="{ active: activeTab === 'teams' }" 
+        @click="activeTab = 'teams'"
+      >👥 扑火队伍</div>
+      <div 
+        class="tab-item" 
+        :class="{ active: activeTab === 'equipments' }" 
+        @click="activeTab = 'equipments'"
+      >⚙️ 装备物资</div>
+      <div 
+        class="tab-item" 
+        :class="{ active: activeTab === 'watchtowers' }" 
+        @click="activeTab = 'watchtowers'"
+      >🗼 瞭望塔</div>
+      <div 
+        class="tab-item" 
+        :class="{ active: activeTab === 'watersources' }" 
+        @click="activeTab = 'watersources'"
+      >💧 水源地</div>
     </div>
 
+    <!-- 扑火队伍 -->
     <div v-if="activeTab === 'teams'">
       <div class="stat-cards">
         <div class="stat-card">
           <div class="stat-card-label">专业扑火队</div>
-          <div class="stat-card-value">{{ store.fireTeams.filter(t => t.name.includes('专业')).length }}</div>
+          <div class="stat-card-value">{{ countProfessionalTeams }}</div>
         </div>
         <div class="stat-card">
           <div class="stat-card-label">半专业队</div>
-          <div class="stat-card-value">{{ store.fireTeams.filter(t => t.name.includes('半专业')).length }}</div>
+          <div class="stat-card-value">{{ countSemiProfessionalTeams }}</div>
         </div>
         <div class="stat-card">
           <div class="stat-card-label">总人数</div>
@@ -32,7 +49,7 @@
         </div>
         <div class="stat-card">
           <div class="stat-card-label">待命状态</div>
-          <div class="stat-card-value warning">{{ store.fireTeams.filter(t => t.status === 'standby').length }}</div>
+          <div class="stat-card-value warning">{{ countStandbyTeams }}</div>
         </div>
       </div>
 
@@ -49,7 +66,6 @@
               <th>人数</th>
               <th>状态</th>
               <th>所在位置</th>
-              <th>操作</th>
             </tr>
           </thead>
           <tbody>
@@ -64,18 +80,13 @@
                 </span>
               </td>
               <td>{{ team.location }}</td>
-              <td>
-                <div class="flex gap-8">
-                  <button class="btn btn-primary btn-sm">详情</button>
-                  <button class="btn btn-default btn-sm">调度</button>
-                </div>
-              </td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
 
+    <!-- 装备物资 -->
     <div v-if="activeTab === 'equipments'">
       <div class="stat-cards">
         <div class="stat-card">
@@ -84,15 +95,15 @@
         </div>
         <div class="stat-card">
           <div class="stat-card-label">正常可用</div>
-          <div class="stat-card-value success">{{ store.equipments.filter(e => e.status === 'normal').length }}</div>
+          <div class="stat-card-value success">{{ countNormalEquip }}</div>
         </div>
         <div class="stat-card">
           <div class="stat-card-label">待维护</div>
-          <div class="stat-card-value warning">{{ store.equipments.filter(e => e.status === 'maintenance').length }}</div>
+          <div class="stat-card-value warning">{{ countMaintenanceEquip }}</div>
         </div>
         <div class="stat-card">
           <div class="stat-card-label">已损坏</div>
-          <div class="stat-card-value danger">{{ store.equipments.filter(e => e.status === 'damaged').length }}</div>
+          <div class="stat-card-value danger">{{ countDamagedEquip }}</div>
         </div>
       </div>
 
@@ -139,17 +150,25 @@
       </div>
     </div>
 
+    <!-- 瞭望塔 -->
     <div v-if="activeTab === 'watchtowers'">
       <div class="two-col">
         <div class="card">
           <div class="card-header">
             <div class="card-title">🗺️ 瞭望塔分布</div>
-            <button class="btn btn-primary btn-sm" @click="openWatchTowerModal()">+ 新增</button>
+            <button class="btn btn-primary btn-sm" @click="openWatchTowerModal">+ 新增</button>
           </div>
           <div class="map-container" style="height: 350px;">
             <div style="position: relative; width: 100%; height: 100%; background: linear-gradient(135deg, #f0f5ff 0%, #d6e4ff 100%);">
-              <div v-for="(tower, idx) in store.watchTowers" :key="tower.id"
-                   :style="{ position: 'absolute', left: (10 + (idx % 3) * 30) + '%', top: (20 + Math.floor(idx / 3) * 30) + '%' }">
+              <div 
+                v-for="(tower, idx) in store.watchTowers" 
+                :key="tower.id"
+                :style="{ 
+                  position: 'absolute', 
+                  left: (10 + (idx % 3) * 30) + '%', 
+                  top: (20 + Math.floor(idx / 3) * 30) + '%' 
+                }"
+              >
                 <div style="background: #1890ff; color: white; padding: 8px 12px; border-radius: 6px; box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3); font-size: 12px;">
                   🗼 {{ tower.name }}
                 </div>
@@ -163,7 +182,11 @@
             <div class="card-title">🗼 瞭望塔列表</div>
           </div>
           <div style="max-height: 350px; overflow-y: auto;">
-            <div v-for="tower in store.watchTowers" :key="tower.id" style="padding: 16px; border-bottom: 1px solid #f0f0f0;">
+            <div 
+              v-for="tower in store.watchTowers" 
+              :key="tower.id" 
+              style="padding: 16px; border-bottom: 1px solid #f0f0f0;"
+            >
               <div class="flex-between mb-8">
                 <strong>{{ tower.name }}</strong>
                 <span class="badge badge-info">高度{{ tower.height }}m</span>
@@ -183,17 +206,25 @@
       </div>
     </div>
 
+    <!-- 水源地 -->
     <div v-if="activeTab === 'watersources'">
       <div class="two-col">
         <div class="card">
           <div class="card-header">
             <div class="card-title">🗺️ 水源地分布</div>
-            <button class="btn btn-primary btn-sm" @click="openWaterSourceModal()">+ 新增</button>
+            <button class="btn btn-primary btn-sm" @click="openWaterSourceModal">+ 新增</button>
           </div>
           <div class="map-container" style="height: 350px;">
             <div style="position: relative; width: 100%; height: 100%; background: linear-gradient(135deg, #e6fffb 0%, #b5f5ec 100%);">
-              <div v-for="(ws, idx) in store.waterSources" :key="ws.id"
-                   :style="{ position: 'absolute', left: (15 + (idx % 3) * 25) + '%', top: (25 + Math.floor(idx / 3) * 25) + '%' }">
+              <div 
+                v-for="(ws, idx) in store.waterSources" 
+                :key="ws.id"
+                :style="{ 
+                  position: 'absolute', 
+                  left: (15 + (idx % 3) * 25) + '%', 
+                  top: (25 + Math.floor(idx / 3) * 25) + '%' 
+                }"
+              >
                 <div style="background: #13c2c2; color: white; padding: 8px 12px; border-radius: 6px; box-shadow: 0 2px 8px rgba(19, 194, 194, 0.3); font-size: 12px;">
                   💧 {{ ws.name }}
                 </div>
@@ -207,7 +238,11 @@
             <div class="card-title">💧 水源地列表</div>
           </div>
           <div style="max-height: 350px; overflow-y: auto;">
-            <div v-for="ws in store.waterSources" :key="ws.id" style="padding: 16px; border-bottom: 1px solid #f0f0f0;">
+            <div 
+              v-for="ws in store.waterSources" 
+              :key="ws.id" 
+              style="padding: 16px; border-bottom: 1px solid #f0f0f0;"
+            >
               <div class="flex-between mb-8">
                 <strong>{{ ws.name }}</strong>
                 <span class="badge badge-info">{{ getWaterTypeText(ws.type) }}</span>
@@ -224,109 +259,112 @@
       </div>
     </div>
 
-    <div v-if="showTeamModal" class="modal-overlay" @click.self="showTeamModal = false">
+    <!-- 队伍登记弹窗 -->
+    <div v-if="showTeamModal" class="modal-overlay" @click.self="closeTeamModal">
       <div class="modal">
         <div class="modal-header">
           <div class="modal-title">👥 登记扑火队伍</div>
-          <button class="modal-close" @click="showTeamModal = false">×</button>
+          <button class="modal-close" @click="closeTeamModal">×</button>
         </div>
         <div class="modal-body">
           <div class="form-item">
             <label class="form-label">队伍名称</label>
-            <input class="form-input" v-model="newTeam.name" placeholder="请输入队伍名称" />
+            <input class="form-input" v-model="teamForm.name" placeholder="请输入队伍名称" />
           </div>
           <div class="form-row">
             <div class="form-item">
               <label class="form-label">队长</label>
-              <input class="form-input" v-model="newTeam.leader" placeholder="请输入队长姓名" />
+              <input class="form-input" v-model="teamForm.leader" placeholder="请输入队长姓名" />
             </div>
             <div class="form-item">
               <label class="form-label">联系电话</label>
-              <input class="form-input" v-model="newTeam.phone" placeholder="请输入联系电话" />
+              <input class="form-input" v-model="teamForm.phone" placeholder="请输入联系电话" />
             </div>
           </div>
           <div class="form-row">
             <div class="form-item">
               <label class="form-label">人数</label>
-              <input class="form-input" type="number" v-model.number="newTeam.memberCount" />
+              <input class="form-input" type="number" v-model.number="teamForm.memberCount" />
             </div>
             <div class="form-item">
               <label class="form-label">驻扎位置</label>
-              <input class="form-input" v-model="newTeam.location" placeholder="请输入驻扎位置" />
+              <input class="form-input" v-model="teamForm.location" placeholder="请输入驻扎位置" />
             </div>
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-default" @click="showTeamModal = false">取消</button>
+          <button class="btn btn-default" @click="closeTeamModal">取消</button>
           <button class="btn btn-primary" @click="saveTeam">保存</button>
         </div>
       </div>
     </div>
 
-    <div v-if="showWatchTowerModal" class="modal-overlay" @click.self="showWatchTowerModal = false">
+    <!-- 瞭望塔弹窗 -->
+    <div v-if="showWatchTowerModal" class="modal-overlay" @click.self="closeWatchTowerModal">
       <div class="modal">
         <div class="modal-header">
           <div class="modal-title">🗼 {{ editingTower ? '编辑' : '标注' }}瞭望塔</div>
-          <button class="modal-close" @click="showWatchTowerModal = false">×</button>
+          <button class="modal-close" @click="closeWatchTowerModal">×</button>
         </div>
         <div class="modal-body">
           <div class="form-item">
             <label class="form-label">瞭望塔名称</label>
-            <input class="form-input" v-model="newWatchTower.name" placeholder="请输入瞭望塔名称" />
+            <input class="form-input" v-model="towerForm.name" placeholder="请输入瞭望塔名称" />
           </div>
           <div class="form-row">
             <div class="form-item">
               <label class="form-label">经度</label>
-              <input class="form-input" type="number" step="0.0001" v-model.number="newWatchTower.lng" placeholder="如：116.4074" />
+              <input class="form-input" type="number" step="0.0001" v-model.number="towerForm.lng" placeholder="如：116.4074" />
             </div>
             <div class="form-item">
               <label class="form-label">纬度</label>
-              <input class="form-input" type="number" step="0.0001" v-model.number="newWatchTower.lat" placeholder="如：39.9042" />
+              <input class="form-input" type="number" step="0.0001" v-model.number="towerForm.lat" placeholder="如：39.9042" />
             </div>
           </div>
           <div class="form-row">
             <div class="form-item">
               <label class="form-label">塔高(米)</label>
-              <input class="form-input" type="number" v-model.number="newWatchTower.height" />
+              <input class="form-input" type="number" v-model.number="towerForm.height" />
             </div>
             <div class="form-item">
               <label class="form-label">瞭望范围(公里)</label>
-              <input class="form-input" type="number" v-model.number="newWatchTower.range" />
+              <input class="form-input" type="number" v-model.number="towerForm.range" />
             </div>
           </div>
           <div class="form-row">
             <div class="form-item">
               <label class="form-label">值守员</label>
-              <input class="form-input" v-model="newWatchTower.keeper" placeholder="请输入值守员姓名" />
+              <input class="form-input" v-model="towerForm.keeper" placeholder="请输入值守员姓名" />
             </div>
             <div class="form-item">
               <label class="form-label">联系电话</label>
-              <input class="form-input" v-model="newWatchTower.phone" placeholder="请输入联系电话" />
+              <input class="form-input" v-model="towerForm.phone" placeholder="请输入联系电话" />
             </div>
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-default" @click="showWatchTowerModal = false">取消</button>
+          <button class="btn btn-default" @click="closeWatchTowerModal">取消</button>
           <button class="btn btn-primary" @click="saveWatchTower">保存</button>
         </div>
       </div>
     </div>
 
-    <div v-if="showWaterSourceModal" class="modal-overlay" @click.self="showWaterSourceModal = false">
+    <!-- 水源地弹窗 -->
+    <div v-if="showWaterSourceModal" class="modal-overlay" @click.self="closeWaterSourceModal">
       <div class="modal">
         <div class="modal-header">
           <div class="modal-title">💧 {{ editingWaterSource ? '编辑' : '标注' }}水源地</div>
-          <button class="modal-close" @click="showWaterSourceModal = false">×</button>
+          <button class="modal-close" @click="closeWaterSourceModal">×</button>
         </div>
         <div class="modal-body">
           <div class="form-item">
             <label class="form-label">水源名称</label>
-            <input class="form-input" v-model="newWaterSource.name" placeholder="请输入水源名称" />
+            <input class="form-input" v-model="waterForm.name" placeholder="请输入水源名称" />
           </div>
           <div class="form-row">
             <div class="form-item">
               <label class="form-label">水源类型</label>
-              <select class="form-select" v-model="newWaterSource.type">
+              <select class="form-select" v-model="waterForm.type">
                 <option value="reservoir">水库</option>
                 <option value="river">河流</option>
                 <option value="well">水井</option>
@@ -335,42 +373,43 @@
             </div>
             <div class="form-item">
               <label class="form-label">容量(立方米)</label>
-              <input class="form-input" type="number" v-model.number="newWaterSource.capacity" />
+              <input class="form-input" type="number" v-model.number="waterForm.capacity" />
             </div>
           </div>
           <div class="form-row">
             <div class="form-item">
               <label class="form-label">经度</label>
-              <input class="form-input" type="number" step="0.0001" v-model.number="newWaterSource.lng" placeholder="如：116.4074" />
+              <input class="form-input" type="number" step="0.0001" v-model.number="waterForm.lng" placeholder="如：116.4074" />
             </div>
             <div class="form-item">
               <label class="form-label">纬度</label>
-              <input class="form-input" type="number" step="0.0001" v-model.number="newWaterSource.lat" placeholder="如：39.9042" />
+              <input class="form-input" type="number" step="0.0001" v-model.number="waterForm.lat" placeholder="如：39.9042" />
             </div>
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-default" @click="showWaterSourceModal = false">取消</button>
+          <button class="btn btn-default" @click="closeWaterSourceModal">取消</button>
           <button class="btn btn-primary" @click="saveWaterSource">保存</button>
         </div>
       </div>
     </div>
 
-    <div v-if="showEquipmentModal" class="modal-overlay" @click.self="showEquipmentModal = false">
+    <!-- 装备弹窗 -->
+    <div v-if="showEquipmentModal" class="modal-overlay" @click.self="closeEquipmentModal">
       <div class="modal">
         <div class="modal-header">
           <div class="modal-title">⚙️ {{ editingEquipment ? '编辑' : '新增' }}装备</div>
-          <button class="modal-close" @click="showEquipmentModal = false">×</button>
+          <button class="modal-close" @click="closeEquipmentModal">×</button>
         </div>
         <div class="modal-body">
           <div class="form-row">
             <div class="form-item">
               <label class="form-label">装备名称</label>
-              <input class="form-input" v-model="newEquipment.name" placeholder="请输入装备名称" />
+              <input class="form-input" v-model="equipForm.name" placeholder="请输入装备名称" />
             </div>
             <div class="form-item">
               <label class="form-label">类别</label>
-              <select class="form-select" v-model="newEquipment.category">
+              <select class="form-select" v-model="equipForm.category">
                 <option value="灭火装备">灭火装备</option>
                 <option value="防护装备">防护装备</option>
                 <option value="通讯设备">通讯设备</option>
@@ -383,11 +422,11 @@
           <div class="form-row">
             <div class="form-item">
               <label class="form-label">数量</label>
-              <input class="form-input" type="number" v-model.number="newEquipment.quantity" />
+              <input class="form-input" type="number" v-model.number="equipForm.quantity" />
             </div>
             <div class="form-item">
               <label class="form-label">单位</label>
-              <select class="form-select" v-model="newEquipment.unit">
+              <select class="form-select" v-model="equipForm.unit">
                 <option value="台">台</option>
                 <option value="支">支</option>
                 <option value="套">套</option>
@@ -401,11 +440,11 @@
           <div class="form-row">
             <div class="form-item">
               <label class="form-label">存放位置</label>
-              <input class="form-input" v-model="newEquipment.location" placeholder="请输入存放位置" />
+              <input class="form-input" v-model="equipForm.location" placeholder="请输入存放位置" />
             </div>
             <div class="form-item">
               <label class="form-label">状态</label>
-              <select class="form-select" v-model="newEquipment.status">
+              <select class="form-select" v-model="equipForm.status">
                 <option value="normal">正常</option>
                 <option value="maintenance">维护中</option>
                 <option value="damaged">损坏</option>
@@ -414,11 +453,11 @@
           </div>
           <div class="form-item">
             <label class="form-label">最近检查日期</label>
-            <input class="form-input" type="date" v-model="newEquipment.lastCheckDate" />
+            <input class="form-input" type="date" v-model="equipForm.lastCheckDate" />
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-default" @click="showEquipmentModal = false">取消</button>
+          <button class="btn btn-default" @click="closeEquipmentModal">取消</button>
           <button class="btn btn-primary" @click="saveEquipment">保存</button>
         </div>
       </div>
@@ -433,16 +472,20 @@ import type { FireTeam, WatchTower, WaterSource, Equipment } from '@/types'
 
 const store = useMainStore()
 const activeTab = ref('teams')
+
+// 弹窗状态
 const showTeamModal = ref(false)
 const showWatchTowerModal = ref(false)
 const showWaterSourceModal = ref(false)
 const showEquipmentModal = ref(false)
 
+// 编辑状态
 const editingTower = ref<WatchTower | null>(null)
 const editingWaterSource = ref<WaterSource | null>(null)
 const editingEquipment = ref<Equipment | null>(null)
 
-const newTeam = ref({
+// 表单数据 - 使用简单的对象，避免类型问题
+const teamForm = ref({
   name: '',
   leader: '',
   phone: '',
@@ -450,7 +493,7 @@ const newTeam = ref({
   location: ''
 })
 
-const newWatchTower = ref({
+const towerForm = ref({
   name: '',
   lng: 116.4074,
   lat: 39.9042,
@@ -460,28 +503,54 @@ const newWatchTower = ref({
   phone: ''
 })
 
-const newWaterSource = ref({
+const waterForm = ref({
   name: '',
-  type: 'reservoir' as 'reservoir' | 'river' | 'well' | 'pond',
+  type: 'reservoir',
   lng: 116.4074,
   lat: 39.9042,
   capacity: 10000
 })
 
-const newEquipment = ref({
+const equipForm = ref({
   name: '',
   category: '灭火装备',
   quantity: 1,
   unit: '台',
   location: '',
-  status: 'normal' as 'normal' | 'damaged' | 'maintenance',
+  status: 'normal',
   lastCheckDate: new Date().toISOString().split('T')[0]
+})
+
+// 统计计算
+const countProfessionalTeams = computed(() => {
+  return store.fireTeams.filter(t => t.name.includes('专业')).length
+})
+
+const countSemiProfessionalTeams = computed(() => {
+  return store.fireTeams.filter(t => t.name.includes('半专业')).length
 })
 
 const totalMembers = computed(() => {
   return store.fireTeams.reduce((sum, t) => sum + t.memberCount, 0)
 })
 
+const countStandbyTeams = computed(() => {
+  return store.fireTeams.filter(t => t.status === 'standby').length
+})
+
+const countNormalEquip = computed(() => {
+  return store.equipments.filter(e => e.status === 'normal').length
+})
+
+const countMaintenanceEquip = computed(() => {
+  return store.equipments.filter(e => e.status === 'maintenance').length
+})
+
+const countDamagedEquip = computed(() => {
+  return store.equipments.filter(e => e.status === 'damaged').length
+})
+
+// 工具函数
 function getTeamStatusText(status: string) {
   const map: Record<string, string> = {
     standby: '待命',
@@ -528,12 +597,13 @@ function getWaterTypeText(type: string) {
   return map[type] || type
 }
 
+// 弹窗操作
 function openWatchTowerModal(tower?: WatchTower) {
   editingTower.value = tower || null
   if (tower) {
-    newWatchTower.value = { ...tower }
+    towerForm.value = { ...tower }
   } else {
-    newWatchTower.value = {
+    towerForm.value = {
       name: '',
       lng: 116.4074,
       lat: 39.9042,
@@ -546,12 +616,17 @@ function openWatchTowerModal(tower?: WatchTower) {
   showWatchTowerModal.value = true
 }
 
+function closeWatchTowerModal() {
+  showWatchTowerModal.value = false
+  editingTower.value = null
+}
+
 function openWaterSourceModal(source?: WaterSource) {
   editingWaterSource.value = source || null
   if (source) {
-    newWaterSource.value = { ...source }
+    waterForm.value = { ...source }
   } else {
-    newWaterSource.value = {
+    waterForm.value = {
       name: '',
       type: 'reservoir',
       lng: 116.4074,
@@ -562,12 +637,17 @@ function openWaterSourceModal(source?: WaterSource) {
   showWaterSourceModal.value = true
 }
 
+function closeWaterSourceModal() {
+  showWaterSourceModal.value = false
+  editingWaterSource.value = null
+}
+
 function openEquipmentModal(equipment?: Equipment) {
   editingEquipment.value = equipment || null
   if (equipment) {
-    newEquipment.value = { ...equipment }
+    equipForm.value = { ...equipment }
   } else {
-    newEquipment.value = {
+    equipForm.value = {
       name: '',
       category: '灭火装备',
       quantity: 1,
@@ -580,87 +660,94 @@ function openEquipmentModal(equipment?: Equipment) {
   showEquipmentModal.value = true
 }
 
+function closeEquipmentModal() {
+  showEquipmentModal.value = false
+  editingEquipment.value = null
+}
+
+function closeTeamModal() {
+  showTeamModal.value = false
+}
+
+// 保存操作
 function saveTeam() {
-  if (!newTeam.value.name || !newTeam.value.leader) {
+  if (!teamForm.value.name || !teamForm.value.leader) {
     alert('请填写必要信息')
     return
   }
   
   const team: FireTeam = {
     id: Date.now().toString(),
-    name: newTeam.value.name,
-    leader: newTeam.value.leader,
-    phone: newTeam.value.phone,
-    memberCount: newTeam.value.memberCount,
+    name: teamForm.value.name,
+    leader: teamForm.value.leader,
+    phone: teamForm.value.phone,
+    memberCount: teamForm.value.memberCount,
     equipment: [],
     status: 'standby',
-    location: newTeam.value.location
+    location: teamForm.value.location
   }
   
   store.fireTeams.push(team)
   store.saveToLocalStorage()
   
-  showTeamModal.value = false
-  newTeam.value = { name: '', leader: '', phone: '', memberCount: 15, location: '' }
+  closeTeamModal()
+  teamForm.value = { name: '', leader: '', phone: '', memberCount: 15, location: '' }
   
   alert('队伍登记成功！')
 }
 
 function saveWatchTower() {
-  if (!newWatchTower.value.name) {
+  if (!towerForm.value.name) {
     alert('请填写瞭望塔名称')
     return
   }
   
   if (editingTower.value) {
-    store.updateWatchTower(editingTower.value.id, newWatchTower.value)
+    store.updateWatchTower(editingTower.value.id, towerForm.value)
     alert('瞭望塔更新成功！')
   } else {
-    store.addWatchTower(newWatchTower.value)
+    store.addWatchTower(towerForm.value)
     alert('瞭望塔标注成功！')
   }
   
   store.saveToLocalStorage()
-  showWatchTowerModal.value = false
-  editingTower.value = null
+  closeWatchTowerModal()
 }
 
 function saveWaterSource() {
-  if (!newWaterSource.value.name) {
+  if (!waterForm.value.name) {
     alert('请填写水源名称')
     return
   }
   
   if (editingWaterSource.value) {
-    store.updateWaterSource(editingWaterSource.value.id, newWaterSource.value)
+    store.updateWaterSource(editingWaterSource.value.id, waterForm.value)
     alert('水源地更新成功！')
   } else {
-    store.addWaterSource(newWaterSource.value)
+    store.addWaterSource(waterForm.value)
     alert('水源地标注成功！')
   }
   
   store.saveToLocalStorage()
-  showWaterSourceModal.value = false
-  editingWaterSource.value = null
+  closeWaterSourceModal()
 }
 
 function saveEquipment() {
-  if (!newEquipment.value.name) {
+  if (!equipForm.value.name) {
     alert('请填写装备名称')
     return
   }
   
   if (editingEquipment.value) {
-    store.updateEquipment(editingEquipment.value.id, newEquipment.value)
+    store.updateEquipment(editingEquipment.value.id, equipForm.value)
     alert('装备更新成功！')
   } else {
-    store.addEquipment(newEquipment.value)
+    store.addEquipment(equipForm.value)
     alert('装备新增成功！')
   }
   
   store.saveToLocalStorage()
-  showEquipmentModal.value = false
-  editingEquipment.value = null
+  closeEquipmentModal()
 }
 
 function deleteEquipment(id: string) {
