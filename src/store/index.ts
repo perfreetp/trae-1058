@@ -216,32 +216,47 @@ export const useMainStore = defineStore('main', () => {
     localStorage.setItem('forest-fire-data', JSON.stringify(data))
   }
 
-  function loadFromLocalStorage() {
-    const saved = localStorage.getItem('forest-fire-data')
-    if (saved) {
-      try {
-        const data = JSON.parse(saved)
-        weatherData.value = data.weatherData || []
-        patrolRecords.value = data.patrolRecords || []
-        watchTowers.value = data.watchTowers || []
-        waterSources.value = data.waterSources || []
-        firePoints.value = data.firePoints || []
-        smokePoints.value = data.smokePoints || []
-        fireTeams.value = data.fireTeams || []
-        equipments.value = data.equipments || []
-        callRecords.value = data.callRecords || []
-        timelineEvents.value = data.timelineEvents || []
-        evacuationPoints.value = data.evacuationPoints || []
-        drillRecords.value = data.drillRecords || []
-        reviewReports.value = data.reviewReports || []
-        dailyReports.value = data.dailyReports || []
-        gridCells.value = data.gridCells || []
-        return true
-      } catch {
-        return false
+  function safeLoad<T>(data: any, key: string, fallback: T): T {
+    try {
+      const value = data[key]
+      if (Array.isArray(value)) {
+        return value as T
       }
+      return fallback
+    } catch {
+      return fallback
     }
-    return false
+  }
+
+  function loadFromLocalStorage() {
+    try {
+      const saved = localStorage.getItem('forest-fire-data')
+      if (!saved) return false
+      
+      const data = JSON.parse(saved)
+      if (!data || typeof data !== 'object') return false
+      
+      weatherData.value = safeLoad(data, 'weatherData', [])
+      patrolRecords.value = safeLoad(data, 'patrolRecords', [])
+      watchTowers.value = safeLoad(data, 'watchTowers', [])
+      waterSources.value = safeLoad(data, 'waterSources', [])
+      firePoints.value = safeLoad(data, 'firePoints', [])
+      smokePoints.value = safeLoad(data, 'smokePoints', [])
+      fireTeams.value = safeLoad(data, 'fireTeams', [])
+      equipments.value = safeLoad(data, 'equipments', [])
+      callRecords.value = safeLoad(data, 'callRecords', [])
+      timelineEvents.value = safeLoad(data, 'timelineEvents', [])
+      evacuationPoints.value = safeLoad(data, 'evacuationPoints', [])
+      drillRecords.value = safeLoad(data, 'drillRecords', [])
+      reviewReports.value = safeLoad(data, 'reviewReports', [])
+      dailyReports.value = safeLoad(data, 'dailyReports', [])
+      gridCells.value = safeLoad(data, 'gridCells', [])
+      
+      return true
+    } catch (e) {
+      console.error('Failed to load from localStorage:', e)
+      return false
+    }
   }
 
   return {

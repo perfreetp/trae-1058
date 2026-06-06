@@ -84,7 +84,16 @@ function updateTime() {
 }
 
 onMounted(() => {
-  if (!store.loadFromLocalStorage()) {
+  try {
+    const loaded = store.loadFromLocalStorage()
+    if (!loaded) {
+      store.initMockData()
+    }
+  } catch (e) {
+    console.error('Failed to initialize store, using mock data:', e)
+    try {
+      localStorage.removeItem('forest-fire-data')
+    } catch {}
     store.initMockData()
   }
   updateTime()
