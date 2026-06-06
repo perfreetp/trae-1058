@@ -1,0 +1,29 @@
+{
+  "name": "forest-fire-control",
+  "version": "1.0.0",
+  "description": "县级林业防火值班室综合管理系统",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build && electron-builder",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.4.0",
+    "vue-router": "^4.2.5",
+    "pinia": "^2.1.7",
+    "echarts": "^5.4.3",
+    "dayjs": "^1.11.10",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.0",
+    "typescript": "^5.3.0",
+    "vite": "^5.0.0",
+    "vue-tsc": "^1.8.27",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
+    "vite-plugin-electron": "^0.28.0",
+    "vite-plugin-electron-renderer": "^0.14.5"
+  }
+}
