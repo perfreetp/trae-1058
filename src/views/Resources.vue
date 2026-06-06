@@ -462,7 +462,7 @@ const newWatchTower = ref({
 
 const newWaterSource = ref({
   name: '',
-  type: 'reservoir' as const,
+  type: 'reservoir' as 'reservoir' | 'river' | 'well' | 'pond',
   lng: 116.4074,
   lat: 39.9042,
   capacity: 10000
@@ -474,7 +474,7 @@ const newEquipment = ref({
   quantity: 1,
   unit: '台',
   location: '',
-  status: 'normal' as const,
+  status: 'normal' as 'normal' | 'damaged' | 'maintenance',
   lastCheckDate: new Date().toISOString().split('T')[0]
 })
 

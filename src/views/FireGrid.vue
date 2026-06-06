@@ -89,7 +89,8 @@
               <th>日期</th>
               <th>气温</th>
               <th>湿度</th>
-              <th>风力</th>
+              <th>风力风向</th>
+              <th>降雨量</th>
               <th>火险等级</th>
             </tr>
           </thead>
@@ -99,6 +100,7 @@
               <td>{{ w.temperature }}℃</td>
               <td>{{ w.humidity }}%</td>
               <td>{{ w.windSpeed }}级 {{ w.windDirection }}风</td>
+              <td>{{ w.rainfall }} mm</td>
               <td>
                 <span class="badge" :class="`badge-${getRiskBadgeClass(w.fireRiskLevel)}`">
                   {{ getRiskText(w.fireRiskLevel) }}

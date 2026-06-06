@@ -132,7 +132,7 @@
         </div>
         <div class="modal-footer">
           <button class="btn btn-default" @click="showReportModal = false">关闭</button>
-          <button class="btn btn-primary" @click="exportOneReport(currentReport)">导出PDF</button>
+          <button class="btn btn-primary" @click="exportOneReport(currentReport)">导出HTML</button>
         </div>
       </div>
     </div>
@@ -338,7 +338,7 @@ function viewReport(report: DailyReport) {
   showReportModal.value = true
 }
 
-function exportDaily() {
+async function exportDaily() {
   const data = store.dailyReports.map(r => ({
     '日期': r.date,
     '天气情况': r.weather,
@@ -349,11 +349,13 @@ function exportDaily() {
     '生成时间': r.createTime
   }))
   
-  exportToExcel(data, '值班日报汇总.xlsx', '值班日报')
-  alert('值班日报汇总已导出为 Excel 文件！')
+  const success = await exportToExcel(data, '值班日报汇总.xlsx', '值班日报')
+  if (success) {
+    alert('值班日报汇总已导出为 Excel 文件！')
+  }
 }
 
-function exportOneReport(report: DailyReport | null) {
+async function exportOneReport(report: DailyReport | null) {
   if (!report) return
   
   const content = `
@@ -390,8 +392,10 @@ function exportOneReport(report: DailyReport | null) {
     </div>
   `
   
-  exportToHTML('值班日报 - ' + report.date, content, `值班日报_${report.date}.html`)
-  alert('值班日报已导出为 HTML 文件，可用浏览器打开或打印为PDF！')
+  const success = await exportToHTML('值班日报 - ' + report.date, content, `值班日报_${report.date}.html`)
+  if (success) {
+    alert('值班日报已导出为 HTML 文件，可用浏览器打开或打印为PDF！')
+  }
 }
 
 onMounted(() => {

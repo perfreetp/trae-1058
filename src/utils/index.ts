@@ -135,14 +135,47 @@ export function calculateFireRiskLevel(temperature: number, humidity: number, wi
   return 1
 }
 
-export function exportToExcel(data: any[], filename: string, sheetName: string = 'Sheet1') {
+export async function exportToExcel(data: any[], filename: string, sheetName: string = 'Sheet1'): Promise<boolean> {
   const worksheet = XLSX.utils.json_to_sheet(data)
   const workbook = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(workbook, worksheet, sheetName)
-  XLSX.writeFile(workbook, filename)
+  
+  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+  const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  
+  if ('showSaveFilePicker' in window) {
+    try {
+      const handle = await (window as any).showSaveFilePicker({
+        suggestedName: filename,
+        types: [{
+          description: 'Excel 文件',
+          accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] }
+        }]
+      })
+      const writable = await handle.createWritable()
+      await writable.write(blob)
+      await writable.close()
+      return true
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        return false
+      }
+      throw err
+    }
+  } else {
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    return true
+  }
 }
 
-export function exportToHTML(title: string, content: string, filename: string) {
+export async function exportToHTML(title: string, content: string, filename: string): Promise<boolean> {
   const htmlContent = `
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -173,14 +206,37 @@ export function exportToHTML(title: string, content: string, filename: string) {
 </html>`
   
   const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+  
+  if ('showSaveFilePicker' in window) {
+    try {
+      const handle = await (window as any).showSaveFilePicker({
+        suggestedName: filename,
+        types: [{
+          description: 'HTML 文件',
+          accept: { 'text/html': ['.html'] }
+        }]
+      })
+      const writable = await handle.createWritable()
+      await writable.write(blob)
+      await writable.close()
+      return true
+    } catch (err: any) {
+      if (err.name === 'AbortError') {
+        return false
+      }
+      throw err
+    }
+  } else {
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    return true
+  }
 }
 
 export function triggerFileInput(accept: string = '.xlsx,.xls,.csv'): Promise<File> {

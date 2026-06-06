@@ -337,7 +337,7 @@ function saveCall() {
   alert('通话纪要已保存！')
 }
 
-function exportReview(report: ReviewReport) {
+async function exportReview(report: ReviewReport) {
   const content = `
     <h1>${report.title}</h1>
     <h2 style="text-align: center; color: #666;">关联演练：${getDrillName(report.drillId)}</h2>
@@ -362,7 +362,9 @@ function exportReview(report: ReviewReport) {
     </div>
   `
   
-  exportToHTML(report.title, content, `${report.title}.html`)
-  alert('复盘报告已导出为 HTML 文件，可用浏览器打开或打印为PDF！')
+  const success = await exportToHTML(report.title, content, `${report.title}.html`)
+  if (success) {
+    alert('复盘报告已导出为 HTML 文件，可用浏览器打开或打印为PDF！')
+  }
 }
 </script>
